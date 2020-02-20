@@ -8,13 +8,16 @@ University of California, Los Angeles
 
 # Instructions
 This software has been tested on macOS Mojave. <br/>
+
+It depends on [Cmake](https://cmake.org/) for compilation, 
+
 <!-- a normal html comment 
 It depends on [Eigen](eigen.tuxfamily.org/) and [callisto](www.nieuwenhuisen.nl/callisto/), 
 which are included in the code. Callisto is used for visualization purposes and requires DirectX 9.0c. 
 If you want to compile the code with x64 support, you should disable the visualizer. <br/>
 --> 
 
-After the code is compiled, to simulate a scenario go to the top folder and run:</br>
+To compile and run the default simualtion scenario, go to the top folder and run:</br>
 "./makecrowds" <br/>
 
 # TODO
