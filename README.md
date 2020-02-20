@@ -14,7 +14,7 @@ which are included in the code. Callisto is used for visualization purposes and 
 If you want to compile the code with x64 support, you should disable the visualizer. <br/>
 --> 
 
-After the code is compiled, to simulate a scenario go to the bin folder and run:</br>
+After the code is compiled, to simulate a scenario go to the top folder and run:</br>
 "./makecrowds" <br/>
 
 # TODO
