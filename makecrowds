@@ -1,0 +1,2 @@
+find out -name '*.txt' -exec rm {} +   
+cd build && cmake .. && cmake --build . && ./main && cd ..
