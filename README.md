@@ -3,7 +3,7 @@
 ## Position-Based Real-Time Simulation of Large Crowds
 
 [Position-Based Real-Time Simulation of Large Crowds](http://www.cs.ucla.edu/~tweiss)<br />
-[Tomer Weiss](http://www.cs.ucla.ed/~tweiss), Alan Litteneker, Chenfanfu Jiang, and Demetri Terzopoulos<br/>
+[Tomer Weiss](http://www.cs.ucla.edu/~tweiss), Alan Litteneker, Chenfanfu Jiang, and Demetri Terzopoulos<br/>
 University of California, Los Angeles
 
 # Instructions
