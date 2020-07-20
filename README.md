@@ -7,9 +7,9 @@
 University of California, Los Angeles
 
 # Instructions
-This software has been tested on macOS Mojave. <br/>
+This software has been tested on macOS Mojave, and Ubuntu 18.04. <br/>
 
-It depends on [Cmake](https://cmake.org/) for compilation, and [GLFW](https://www.glfw.org/) for visualization.
+It depends on [Cmake](https://cmake.org/) for compilation, Opengl, Glut, and [GLFW](https://www.glfw.org/) for visualization.
 <!-- a normal html comment 
 It depends on [Eigen](eigen.tuxfamily.org/) and [callisto](www.nieuwenhuisen.nl/callisto/), 
 which are included in the code. Callisto is used for visualization purposes and requires DirectX 9.0c. 
