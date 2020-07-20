@@ -885,26 +885,6 @@ public:
         }
       }
     }
-    /*
-    for(std::unordered_map<unsigned long long,
-      Constraint*>::const_iterator it = collision_map.cbegin();
-      it != collision_map.cend(); ++it)
-      {
-          if(it->second->active)
-          {
-              //printf("Super Happy active constraint :-)\n");
-              for(int j=0;j<it->second->num_particles;j++)
-              {
-                  int idx=it->second->indicies[j];
-                  particles[idx]->Delta_x.x += it->second->delta_X[j].x;
-                  particles[idx]->Delta_x.y += it->second->delta_X[j].y;
-                  particles[idx]->Delta_x_ctr++;
-              }
-          }
-      }
-      */
-
-    // traverse ground and wall constraints to accumalte deltas
 
     for (int i = 0; i < num_constraints; i++) {
       if (constraints[i]->active) {
@@ -939,21 +919,6 @@ public:
                 (particles[i]->X_pred.y - particles[i]->X.y) * mult;
           }
 
-          /*
-          float max_dv_mag = 0.0013;
-          float curr_v_x=((particles[i]->X_pred.x-particles[i]->X.x)/time_step);
-          float curr_v_y=((particles[i]->X_pred.y-particles[i]->X.y)/time_step);
-          float dv_x=curr_v_x-particles[i]->V_prev.x;
-          float dv_y=curr_v_y-particles[i]->V_prev.y;
-          float dv_mag=sqrt(dv_x*dv_x+dv_y*dv_y);
-          if(dv_mag>max_dv_mag)
-          {
-              float mult = (max_dv_mag/dv_mag);
-              particles[i]->X_pred.x=particles[i]->X.x+curr_v_x*mult;
-              particles[i]->X_pred.y=particles[i]->X.y+curr_v_y*mult;
-              //printf("%.3f %.3f\n",dv_mag,mult);
-          }
-          */
         }
       }
     }
@@ -1094,17 +1059,10 @@ public:
 
     for (int i = 0; i < num_particles; i++) {
       planner->calc_velocity(i);
-      // particles[i]->V.x=planner->velocity_buffer[i].x;
-      // particles[i]->V.y=planner->velocity_buffer[i].y;
+
       particles[i]->V_prev.x = particles[i]->V.x;
       particles[i]->V_prev.y = particles[i]->V.y;
 
-      // For sand simulation:
-      // particles[i]->V.y+=time_step*9.81; //times mass TODO?
-      // particles[i]->V.x*=0.99;
-      // particles[i]->V.y*=0.99;
-      // printf("particle %d
-      // speed=(%.2f,%.2f)\n",i,particles[i]->V.x,particles[i]->V.y);
     }
 
     for (int i = 0; i < num_particles; i++) {
