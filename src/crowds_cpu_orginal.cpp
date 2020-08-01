@@ -52,9 +52,8 @@
 
 #define ALPHA 1.2
 #define ITER_COUNT 1
-#define MAX_ACCEL 20.0f
-#define MAX_SPEED 10.4f
-#define V_PREF_ACCEL 1.4f
+#define MAX_ACCEL 0.25f
+#define V_PREF_ACCEL 1.8f
 #define KSI_ACCEL 0.54f
 #define NN_ACCEL 10.0f
 /* ========================= */
@@ -589,6 +588,39 @@ public:
         1.0f - powf(1.0f - friction_constraint_stiffness, (1.0f / n));
   }
 
+  void update_predicted_position()
+  {
+      for (int i = 0; i < num_particles; i++) {
+        if (particles[i]->Delta_x_ctr > 0) {
+          particles[i]->X_pred.x +=
+              ALPHA * particles[i]->Delta_x.x / particles[i]->Delta_x_ctr;
+          particles[i]->X_pred.y +=
+              ALPHA * particles[i]->Delta_x.y / particles[i]->Delta_x_ctr;
+
+          // clamp
+          if (false) {
+            float maxValue = 0.069;
+            float length_d_i = distance(particles[i]->X_pred, particles[i]->X);
+            if (length_d_i > maxValue) {
+              float mult = (maxValue / length_d_i);
+              particles[i]->X_pred.x =
+                  particles[i]->X.x +
+                  (particles[i]->X_pred.x - particles[i]->X.x) * mult;
+              particles[i]->X_pred.y =
+                  particles[i]->X.y +
+                  (particles[i]->X_pred.y - particles[i]->X.y) * mult;
+            }
+          }
+
+          particles[i]->Delta_x.x = 0.;
+          particles[i]->Delta_x.y = 0.;
+          particles[i]->Delta_x_ctr = 0;
+        }
+      }
+  }
+
+
+
   void stabilization() {
     stability_grid->update_stability(particles);
 
@@ -684,7 +716,7 @@ public:
     }
   }
 
-  void project_velocity_constraints() {
+  void project_longrange_constraints() {
     for (int i = 0; i < num_particles; i++) {
       particles[i]->Delta_x.x = 0.;
       particles[i]->Delta_x.y = 0.;
@@ -755,6 +787,7 @@ public:
       }
     }
 
+    /*
     for (int i = 0; i < num_particles; i++) {
       particles[i]->V.x *= 0.99;
       particles[i]->V.y *= 0.99;
@@ -776,7 +809,6 @@ public:
         particles[i]->V.x += dv_pref.x;
         particles[i]->V.y += dv_pref.y;
       }
-      // clamp(particles[i]->V,MAX_SPEED);
       particles[i]->X_pred.x =
           particles[i]->X.x + particles[i]->V.x * time_step;
       particles[i]->X_pred.y =
@@ -785,13 +817,14 @@ public:
       // so to force that each constraint cannot become
       // TODO also need to clamp maximum speed change clamp
     }
+    */
   }
 
   void project_constraints() {
 
     for (int i = 0; i < num_particles; i++) {
-      particles[i]->Delta_x.x = 0.;
-      particles[i]->Delta_x.y = 0.;
+      particles[i]->Delta_x.x = 0.0;
+      particles[i]->Delta_x.y = 0.0;
       particles[i]->Delta_x_ctr = 0;
     }
 
@@ -823,11 +856,6 @@ public:
         }
       }
     }
-    // ground constraints
-    for (int i = 0; i < num_constraints; i++) {
-      constraints[i]->project(particles);
-    }
-
     // traverse friction constraints to accumalte deltas
     for (int i = 0; i < num_particles; i++) {
       // iterate over adjacent cells
@@ -885,8 +913,11 @@ public:
         }
       }
     }
+    update_predicted_position();
 
+    // ground constraints
     for (int i = 0; i < num_constraints; i++) {
+      constraints[i]->project(particles);
       if (constraints[i]->active) {
         for (int j = 0; j < constraints[i]->num_particles; j++) {
           int idx = constraints[i]->indicies[j];
@@ -898,30 +929,7 @@ public:
       }
     }
 
-    for (int i = 0; i < num_particles; i++) {
-      if (particles[i]->Delta_x_ctr > 0) {
-        particles[i]->X_pred.x +=
-            ALPHA * particles[i]->Delta_x.x / particles[i]->Delta_x_ctr;
-        particles[i]->X_pred.y +=
-            ALPHA * particles[i]->Delta_x.y / particles[i]->Delta_x_ctr;
-        // clamp
-        if (false) {
-
-          float maxValue = 0.069;
-          float length_d_i = distance(particles[i]->X_pred, particles[i]->X);
-          if (length_d_i > maxValue) {
-            float mult = (maxValue / length_d_i);
-            particles[i]->X_pred.x =
-                particles[i]->X.x +
-                (particles[i]->X_pred.x - particles[i]->X.x) * mult;
-            particles[i]->X_pred.y =
-                particles[i]->X.y +
-                (particles[i]->X_pred.y - particles[i]->X.y) * mult;
-          }
-
-        }
-      }
-    }
+    update_predicted_position();
   }
 
   void do_time_step_force() {
@@ -1058,25 +1066,31 @@ public:
     printf("PBD Solve Frame %d\n", step_no);
 
     for (int i = 0; i < num_particles; i++) {
-      planner->calc_velocity(i);
-
       particles[i]->V_prev.x = particles[i]->V.x;
       particles[i]->V_prev.y = particles[i]->V.y;
-
-    }
-
-    for (int i = 0; i < num_particles; i++) {
+      planner->calc_velocity(i);
+      particles[i]->V.x *= 0.9999;
+      particles[i]->V.y *= 0.9999;
+      particles[i]->V.x = KSI * planner->velocity_buffer[i].x + (1-KSI) * particles[i]->V.x;
+      particles[i]->V.y = KSI * planner->velocity_buffer[i].y + (1-KSI) * particles[i]->V.y;
       particles[i]->X_pred.x += time_step * particles[i]->V.x;
       particles[i]->X_pred.y += time_step * particles[i]->V.y;
     }
 
-    //----------------------stability grid stuff
+    //----------------------stability grid
     // stabilization();
     //-----------------------project constraints
 
     grid->update(particles);
 
-    project_velocity_constraints();
+    for (int i = 0; i < num_particles; i++) {
+      particles[i]->Delta_x.x = 0.;
+      particles[i]->Delta_x.y = 0.;
+      particles[i]->Delta_x_ctr = 0;
+    }
+
+    project_longrange_constraints();
+    update_predicted_position();
 
     for (int i = 1; i < (ITER_COUNT + 1); i++) {
       calc_constraint_stiffness(i);
@@ -1411,7 +1425,7 @@ public:
         clamp(delta_X[1], max_acceleration);
       }
 
-      if (false && tao > 0) {
+      if ( tao > 0) {
         float clamp_tao = exp(-tao * tao / tao0);
         float c_x_nom = (v_sq * x0 + b * v_x) / d;
         float c_x = v_x - c_x_nom;
@@ -1445,7 +1459,7 @@ public:
         // s_x*=s_x;
         // s_y*=s_y;
         stiff = exp(-tao * tao / tao0);
-        float s = 0.39 * s_fin /
+        float s =  s_fin /
                   (particles[i]->inv_mass *
                        (grad_y_i * grad_y_i + grad_x_i * grad_x_i) +
                    particles[j]->inv_mass *
@@ -1463,7 +1477,7 @@ public:
   }
 };
 const float Powerlaw_Constraint::k = 1.5; // stiffness
-const float Powerlaw_Constraint::tao0 = 4.;
+const float Powerlaw_Constraint::tao0 = 20.;
 const float Powerlaw_Constraint::maxValue = 0.2; // delta_t * pref_speed
 
 
@@ -2007,9 +2021,10 @@ void dummy_init(Simulation *s) {
     }
   }
 
-  rad = 3.1;
+  rad = 4.5;
   height_init = GROUND_HEIGHT - 50 - 0.11;
   row_init = LEFT_BOUND_X + 1.4 * rad * 50 * 0.5;
+  rad = 3.1;
   for (int i_ = 0; i_ < ROWS / 2; i_++) {
     for (int j_ = 0; j_ < COLS; j_++) {
       float y = height_init - rad * i_ + rand_interval(-0.4, 0.4);
