@@ -56,12 +56,13 @@
 #define V_PREF_ACCEL 1.8f
 #define KSI_ACCEL 0.54f
 #define NN_ACCEL 10.0f
+#define LONG_RANGE_STIFFNESS 0.05
 /* ========================= */
 /* Scenario Params: */
 #define WIDTH 1280
 #define HEIGHT 720
 #define ROWS 16
-#define COLS 36
+#define COLS 12
 #define GROUND_HEIGHT 45.0
 #define GRID_UP_BOUND -436.0
 #define GRID_LOW_BOND GROUND_HEIGHT + 20
@@ -1387,9 +1388,10 @@ public:
     float b_sq = b * b;
     float c = x_sq - radius_sq;
     float d_sq = b_sq - a * c;
-    if (false && d_sq > 0 && (a < -_EPSILON || a > _EPSILON)) {
-      float d = sqrtf(d_sq);
-      float tao = (b - d) / a;
+    float d = sqrtf(d_sq);
+    float tao = (b - d) / a;
+
+    if (d_sq > 0 && (a < -_EPSILON || a > _EPSILON)) {
       float tao_alt = (b + d) / a;
       // pick the min solution that is > 0
       tao = tao_alt < tao && tao_alt > 0 ? tao_alt : tao;
@@ -1411,7 +1413,7 @@ public:
         float grad_x_j = -grad_x_i;
         float grad_y_j = -grad_y_i;
         float stiff = exp(-tao * tao / tao0);
-        float s = 0.5 * tao_sq /
+        float s = LONG_RANGE_STIFFNESS * tao_sq /
                   (particles[i]->inv_mass *
                        (grad_y_i * grad_y_i + grad_x_i * grad_x_i) +
                    particles[j]->inv_mass *
@@ -1425,7 +1427,7 @@ public:
         clamp(delta_X[1], max_acceleration);
       }
 
-      if ( tao > 0) {
+      if ( false && tao > 0) {
         float clamp_tao = exp(-tao * tao / tao0);
         float c_x_nom = (v_sq * x0 + b * v_x) / d;
         float c_x = v_x - c_x_nom;
